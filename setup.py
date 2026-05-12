@@ -11,7 +11,7 @@ setup(
     description="Sets a daily Pokémon fan art wallpaper on Ubuntu GNOME",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/marcos-capella/pokemon-a-day-wallpaper",
+    url="https://github.com/capella-marcosfilipe/pokemon-a-day-wallpaper",
     packages=find_packages(),
     python_requires=">=3.10",
     install_requires=[
