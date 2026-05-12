@@ -4,8 +4,8 @@ from setuptools import setup, find_packages
 long_description = Path("README.md").read_text(encoding="utf-8")
 
 setup(
-    name="Pokémon-a-day Wallpaper",
-    version="0.1.0",
+    name="pokemon-a-day-wallpaper",
+    version="0.1.1",
     author="Marcos Filipe Capella",
     author_email="marcosfilipe.gc@gmail.com",
     description="Sets a daily Pokémon fan art wallpaper on Ubuntu GNOME",
