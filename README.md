@@ -1,6 +1,6 @@
 # Pokémon-a-day Wallpaper
 
-![Pokémon-a-day Wallpaper](/art.png)
+![Pokémon-a-day Wallpaper](https://raw.githubusercontent.com/capella-marcosfilipe/pokemon-a-day-wallpaper/refs/heads/main/art.png)
 
 As a big fan of Bing Wallpaper, I wanted something similar for my GNOME desktop but feturing Pokémon fanart. So I built this tool to automatically set a new Pokémon wallpaper every day, sourced from the amazing community on Wallhaven.
 
