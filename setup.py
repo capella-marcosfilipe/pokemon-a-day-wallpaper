@@ -5,10 +5,10 @@ long_description = Path("README.md").read_text(encoding="utf-8")
 
 setup(
     name="pokemon-a-day-wallpaper",
-    version="0.1.1",
+    version="0.3.0",
     author="Marcos Filipe Capella",
     author_email="marcosfilipe.gc@gmail.com",
-    description="Sets a daily Pokémon fan art wallpaper on Ubuntu GNOME",
+    description="Sets a daily Pokémon fan art wallpaper on Windows and Ubuntu GNOME",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/capella-marcosfilipe/pokemon-a-day-wallpaper",
@@ -30,8 +30,9 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows",
         "Environment :: Console",
         "Topic :: Desktop Environment",
     ],
-    keywords=["pokemon", "wallpaper", "gnome", "ubuntu", "automation"],
+    keywords=["pokemon", "wallpaper", "gnome", "ubuntu", "windows", "automation"],
 )

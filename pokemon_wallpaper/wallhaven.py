@@ -4,26 +4,35 @@ from pathlib import Path
 
 import httpx
 
+from ._paths import DATA_DIR
+
 WALLHAVEN_SEARCH = "https://wallhaven.cc/api/v1/search"
-WALLPAPER_DIR = Path.home() / ".local" / "share" / "pokemon-wallpaper"
+WALLPAPER_DIR = DATA_DIR
 
 
-def find_wallpaper(pokemon_name: str, today: date | None = None) -> str | None:
+def find_wallpaper(
+    pokemon_name: str,
+    today: date | None = None,
+    excluded_urls: set[str] | None = None,
+) -> str | None:
     """Search Wallhaven for a fan art wallpaper of the given Pokémon.
 
     Queries the Wallhaven API for SFW anime wallpapers at 1920x1080 or
     higher, sorted by number of favorites. The choice among the results is
-    deterministic per (Pokémon, date) pair.
+    deterministic per (Pokémon, date) pair, skipping any URLs already in
+    ``excluded_urls`` so the same wallpaper is never shown twice.
 
     Args:
         pokemon_name: The Pokémon's name as returned by the PokéAPI
             (e.g. ``"pikachu"``).
         today: The reference date used to seed the result selection.
             Defaults to the current date.
+        excluded_urls: Set of wallpaper URLs already used; matched results
+            are skipped. Pass ``None`` to disable deduplication.
 
     Returns:
-        The direct URL of the chosen wallpaper, or ``None`` if no results
-        were found for this Pokémon.
+        The direct URL of the chosen wallpaper, or ``None`` if no unseen
+        results were found for this Pokémon.
 
     Raises:
         httpx.HTTPStatusError: If the Wallhaven API returns a non-2xx status.
@@ -46,6 +55,11 @@ def find_wallpaper(pokemon_name: str, today: date | None = None) -> str | None:
     if not results:
         return None
 
+    if excluded_urls:
+        results = [r for r in results if r["path"] not in excluded_urls]
+        if not results:
+            return None
+
     if today is None:
         today = date.today()
 
@@ -57,8 +71,8 @@ def find_wallpaper(pokemon_name: str, today: date | None = None) -> str | None:
 def download_wallpaper(url: str, pokemon_name: str) -> Path:
     """Download a wallpaper image to the local cache directory.
 
-    The file is saved as ``~/.local/share/pokemon-wallpaper/{name}.{ext}``,
-    overwriting any previously downloaded wallpaper for the same Pokémon.
+    The file is saved as ``<DATA_DIR>/{name}.{ext}``, overwriting any
+    previously downloaded wallpaper for the same Pokémon.
 
     Args:
         url: Direct URL of the wallpaper image.
