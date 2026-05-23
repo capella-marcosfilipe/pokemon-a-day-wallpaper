@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from datetime import date
 from importlib.metadata import version
 from pathlib import Path
@@ -5,7 +7,7 @@ from pathlib import Path
 import click
 
 from .pokemon import daily_id_sequence, fetch_pokemon
-from .wallhaven import find_wallpaper, download_wallpaper
+from .wallhaven import find_wallpaper, download_wallpaper, WALLPAPER_DIR
 from .setter import set_wallpaper
 from .scheduler import install as _install, uninstall as _uninstall
 from .state import (
@@ -250,3 +252,35 @@ def uninstall():
         click.echo("Schedule and autostart removed.")
     except Exception as e:
         raise click.ClickException(str(e))
+
+
+@main.command("list-wallpapers")
+def list_wallpapers():
+    """Show the wallpaper history."""
+    history = load_history()
+    if not history:
+        click.echo("No wallpapers in history yet.")
+        return
+
+    for entry in reversed(history):
+        types = ", ".join(t.capitalize() for t in entry["types"])
+        path = Path(entry["path"])
+        status = "ok" if path.exists() else "missing"
+        click.echo(
+            f"{entry['date']}  #{entry['pokemon_id']:03d} "
+            f"{entry['pokemon'].capitalize():<12} ({types:<20})  [{status}]"
+        )
+
+
+@main.command("open-folder")
+def open_folder():
+    """Open the wallpaper folder in the file manager."""
+    if not WALLPAPER_DIR.exists():
+        raise click.ClickException(f"Folder does not exist yet: {WALLPAPER_DIR}")
+
+    if sys.platform == "win32":
+        subprocess.run(["explorer", str(WALLPAPER_DIR)], check=False)
+    else:
+        subprocess.run(["xdg-open", str(WALLPAPER_DIR)], check=False)
+
+    click.echo(f"Opening {WALLPAPER_DIR}")
