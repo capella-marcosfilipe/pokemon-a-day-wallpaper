@@ -5,7 +5,7 @@ long_description = Path("README.md").read_text(encoding="utf-8")
 
 setup(
     name="pokemon-a-day-wallpaper",
-    version="0.3.0",
+    version="1.0.0",
     author="Marcos Filipe Capella",
     author_email="marcosfilipe.gc@gmail.com",
     description="Sets a daily Pokémon fan art wallpaper on Windows and Ubuntu GNOME",
