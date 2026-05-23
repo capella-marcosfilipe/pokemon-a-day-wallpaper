@@ -2,13 +2,13 @@
 
 ![Pokémon-a-day Wallpaper](https://raw.githubusercontent.com/capella-marcosfilipe/pokemon-a-day-wallpaper/refs/heads/main/art.png)
 
-As a big fan of Bing Wallpaper, I wanted something similar for my GNOME desktop but feturing Pokémon fanart. So I built this tool to automatically set a new Pokémon wallpaper every day, sourced from the amazing community on Wallhaven.
+As a big fan of Bing Wallpaper, I wanted something similar for my desktop but featuring Pokémon fanart. So I built this tool to automatically set a new Pokémon wallpaper every day, sourced from the amazing community on Wallhaven.
 
 **Pokémon-a-day Wallpaper** is a CLI tool that randomly selects a Pokémon (seeded by the date, so it's consistent throughout the day) and a high-quality fan art wallpaper (1920x1080 or higher) is fetched from [Wallhaven](https://wallhaven.cc) and applied to your desktop. If you don't like the wallpaper, just run `next` to get a different one — it will still change automatically the following day.
 
 ## Requirements
 
-- GNOME desktop environment
+- Windows 10/11 or Ubuntu with GNOME
 - Python 3.10+
 - Internet connection
 
@@ -26,7 +26,7 @@ pip install pokemon-a-day-wallpaper
 pokemon-wallpaper run
 ```
 
-### Skip to a different wallpaper (same day)
+### Skip to a different wallpaper
 
 Don't like today's pick? Get the next one:
 
@@ -36,15 +36,32 @@ pokemon-wallpaper next
 
 You can run `next` as many times as you want throughout the day. The wallpaper will still automatically reset to a fresh Pokémon the following day.
 
+### Go back to a previous wallpaper
+
+```bash
+pokemon-wallpaper previous
+```
+
+Navigates back through your wallpaper history. The session is paused while browsing — run `refresh` to return to today's wallpaper.
+
+### Resume today's wallpaper
+
+```bash
+pokemon-wallpaper refresh
+```
+
 ### Schedule daily automatic updates
 
-Installs a systemd user timer that runs every day at 08:00:
+Sets up the wallpaper to update every day at 08:00 and to apply automatically on login:
 
 ```bash
 pokemon-wallpaper install
 ```
 
-After installing the timer, apply today's wallpaper right away:
+On **Linux**, this installs a systemd user timer and an XDG autostart entry.  
+On **Windows**, this creates a Task Scheduler entry and a registry Run key — no admin rights required.
+
+After installing, apply today's wallpaper right away:
 
 ```bash
 pokemon-wallpaper run
@@ -56,13 +73,28 @@ pokemon-wallpaper run
 pokemon-wallpaper uninstall
 ```
 
+### Browse your wallpaper history
+
+```bash
+pokemon-wallpaper list-wallpapers
+```
+
+### Open the wallpaper folder
+
+```bash
+pokemon-wallpaper open-folder
+```
+
+Opens the folder where wallpapers are downloaded in your file manager.
+
 ## Wallpaper storage
 
-Downloaded wallpapers are cached at:
+Downloaded wallpapers and history are cached at:
 
-```text
-~/.local/share/pokemon-wallpaper/
-```
+| Platform | Path |
+|----------|------|
+| Linux | `~/.local/share/pokemon-wallpaper/` |
+| Windows | `%LOCALAPPDATA%\pokemon-wallpaper\` |
 
 ## License
 
