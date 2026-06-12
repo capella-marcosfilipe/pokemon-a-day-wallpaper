@@ -51,6 +51,17 @@ X-GNOME-Autostart-enabled=true
 
 
 def _install_linux() -> None:
+    """Install the systemd user timer and XDG autostart entry.
+
+    Writes unit files to ``~/.config/systemd/user/``, a ``.desktop`` file to
+    ``~/.config/autostart/``, then enables and starts the timer so the
+    wallpaper updates every day at 08:00 and is applied on each login.
+
+    Raises:
+        RuntimeError: If the ``pokemon-wallpaper`` executable is not found
+            in ``PATH``.
+        subprocess.CalledProcessError: If any ``systemctl`` call fails.
+    """
     exec_path = shutil.which("pokemon-wallpaper")
     if exec_path is None:
         raise RuntimeError(
@@ -76,6 +87,13 @@ def _install_linux() -> None:
 
 
 def _uninstall_linux() -> None:
+    """Disable and remove the systemd timer and XDG autostart entry.
+
+    Stops and disables ``pokemon-wallpaper.timer``, deletes the unit files
+    from ``~/.config/systemd/user/``, removes the autostart ``.desktop``
+    file, and reloads the systemd daemon. Failures are silently ignored so
+    the function is safe to call even when nothing was installed.
+    """
     subprocess.run(
         ["systemctl", "--user", "disable", "--now", TIMER_NAME],
         check=False,
@@ -158,8 +176,8 @@ def uninstall() -> None:
 
     On Linux, disables the systemd timer and removes the autostart entry.
     On Windows, deletes the Task Scheduler entry and the registry Run key.
-    Failures are silently
-    ignored so the function is safe to call even when nothing was installed.
+    Failures are silently ignored so the function is safe to call even when
+    nothing was installed.
     """
     if sys.platform == "win32":
         _uninstall_windows()

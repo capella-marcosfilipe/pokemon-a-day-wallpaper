@@ -87,6 +87,21 @@ pokemon-wallpaper open-folder
 
 Opens the folder where wallpapers are downloaded in your file manager.
 
+### Configure storage settings
+
+```bash
+pokemon-wallpaper config
+```
+
+Shows the current storage mode. Use flags to change it:
+
+```bash
+pokemon-wallpaper config --keep-images     # Save all wallpapers locally
+pokemon-wallpaper config --no-keep-images  # Keep only the 3 most recent on disk
+```
+
+On first run you will be prompted interactively to choose a storage mode.
+
 ## Wallpaper storage
 
 Downloaded wallpapers and history are cached at:
@@ -95,6 +110,8 @@ Downloaded wallpapers and history are cached at:
 |----------|------|
 | Linux | `~/.local/share/pokemon-wallpaper/` |
 | Windows | `%LOCALAPPDATA%\pokemon-wallpaper\` |
+
+You can choose to keep all wallpapers locally or use a rolling cache that retains only the 3 most recent files on disk (history is always preserved).
 
 ## License
 

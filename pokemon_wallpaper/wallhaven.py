@@ -7,7 +7,8 @@ import httpx
 from ._paths import DATA_DIR
 
 WALLHAVEN_SEARCH = "https://wallhaven.cc/api/v1/search"
-WALLPAPER_DIR = DATA_DIR
+WALLPAPER_DIR = Path.home() / ".local" / "share" / "pokemon-wallpaper"
+_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 
 
 def find_wallpaper(
@@ -71,7 +72,7 @@ def find_wallpaper(
 def download_wallpaper(url: str, pokemon_name: str) -> Path:
     """Download a wallpaper image to the local cache directory.
 
-    The file is saved as ``<DATA_DIR>/{name}.{ext}``, overwriting any
+    The file is saved as ``<WALLPAPER_DIR>/{name}.{ext}``, overwriting any
     previously downloaded wallpaper for the same Pokémon.
 
     Args:
@@ -98,3 +99,33 @@ def download_wallpaper(url: str, pokemon_name: str) -> Path:
                     f.write(chunk)
 
     return dest
+
+
+def prune_wallpapers(keep: int = 3) -> None:
+    """Delete local wallpaper files beyond the ``keep`` most recent ones.
+
+    Reads history to determine which files are still relevant, then removes
+    any image file in WALLPAPER_DIR that is not among the ``keep`` most
+    recently referenced paths.
+    """
+    from .history import load as load_history
+
+    history = load_history()
+    recent_paths: list[Path] = []
+    for entry in reversed(history):
+        p = entry.get("path", "")
+        if p:
+            candidate = Path(p)
+            if candidate not in recent_paths:
+                recent_paths.append(candidate)
+        if len(recent_paths) >= keep:
+            break
+
+    keep_set = set(recent_paths)
+
+    if not WALLPAPER_DIR.exists():
+        return
+
+    for f in WALLPAPER_DIR.iterdir():
+        if f.suffix.lower() in _IMAGE_SUFFIXES and f not in keep_set:
+            f.unlink(missing_ok=True)

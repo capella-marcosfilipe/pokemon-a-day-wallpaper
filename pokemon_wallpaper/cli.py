@@ -7,8 +7,8 @@ from pathlib import Path
 import click
 
 from .pokemon import daily_id_sequence, fetch_pokemon
-from .wallhaven import find_wallpaper, download_wallpaper, WALLPAPER_DIR
-from .setter import set_wallpaper
+from .wallhaven import find_wallpaper, download_wallpaper, prune_wallpapers, WALLPAPER_DIR
+from .setter import set_gnome_wallpaper
 from .scheduler import install as _install, uninstall as _uninstall
 from .state import (
     load_index,
@@ -17,6 +17,8 @@ from .state import (
     set_paused,
     clear_paused,
     get_history_position,
+    get_keep_images,
+    set_keep_images,
 )
 from .history import (
     load as load_history,
@@ -26,6 +28,30 @@ from .history import (
     update_last_path,
     get_today,
 )
+
+
+def _ensure_storage_preference() -> None:
+    """Ask the user once how they want wallpapers stored, then persist the choice."""
+    if get_keep_images() is not None:
+        return
+
+    import sys
+    if not sys.stdin.isatty():
+        # Non-interactive (e.g. systemd timer): default to keep all images.
+        set_keep_images(True)
+        return
+
+    click.echo("")
+    click.echo("First-time setup:")
+    keep = click.confirm(
+        "Save all wallpaper images locally?",
+        default=True,
+    )
+    set_keep_images(keep)
+    if not keep:
+        click.echo("Entendido! Apenas as 3 wallpapers mais recentes serão mantidas no disco.\n")
+    else:
+        click.echo("Todas as wallpapers serão salvas localmente.\n")
 
 
 @click.group(epilog="Author: Marcos Filipe Capella <https://github.com/capella-marcosfilipe>")
@@ -84,9 +110,12 @@ def _apply_from_index(today: date, start_index: int, force_apply: bool = True) -
         })
         save_index(today, index)
 
+        if not get_keep_images():
+            prune_wallpapers(keep=3)
+
         if force_apply:
             click.echo("Applying wallpaper...")
-            set_wallpaper(path)
+            set_gnome_wallpaper(path)
             click.echo(
                 f"Done! Today's Pokémon: #{candidate['id']:03d} "
                 f"{candidate['name'].capitalize()} ({types})."
@@ -123,6 +152,7 @@ def run():
     a new network request. If the session is paused (via 'previous'), the
     wallpaper is fetched and logged but not applied — use 'refresh' to resume.
     """
+    _ensure_storage_preference()
     today = date.today()
     paused = is_paused()
 
@@ -133,7 +163,7 @@ def run():
         else:
             path = _apply_entry(today_entry)
             click.echo("Applying today's wallpaper...")
-            set_wallpaper(path)
+            set_gnome_wallpaper(path)
             types = ", ".join(t.capitalize() for t in today_entry["types"])
             click.echo(
                 f"Done! Today's Pokémon: #{today_entry['pokemon_id']:03d} "
@@ -148,6 +178,7 @@ def run():
 @main.command()
 def next():
     """Skip to the next Pokémon wallpaper for today."""
+    _ensure_storage_preference()
     today = date.today()
     current_index = load_index(today)
     clear_paused()
@@ -162,6 +193,7 @@ def previous():
     Sets the session to paused mode. The wallpaper will not change
     automatically at midnight until you run 'refresh'.
     """
+    _ensure_storage_preference()
     history = load_history()
     if len(history) < 2:
         raise click.ClickException("No previous wallpaper in history.")
@@ -186,7 +218,7 @@ def previous():
         save_history(history)
 
     click.echo(f"Applying wallpaper from {entry['date']}...")
-    set_wallpaper(path)
+    set_gnome_wallpaper(path)
     set_paused(new_pos)
 
     types = ", ".join(t.capitalize() for t in entry["types"])
@@ -203,6 +235,7 @@ def refresh():
     Clears the paused state and re-applies today's wallpaper. If today's
     wallpaper has not been fetched yet, it is fetched now.
     """
+    _ensure_storage_preference()
     today = date.today()
     clear_paused()
 
@@ -217,7 +250,7 @@ def refresh():
                 raise click.ClickException(f"Failed to re-download wallpaper: {e}")
             update_last_path(today_entry["url"], str(path))
         click.echo("Applying today's wallpaper...")
-        set_wallpaper(path)
+        set_gnome_wallpaper(path)
         types = ", ".join(t.capitalize() for t in today_entry["types"])
         click.echo(
             f"Done! Today's Pokémon: #{today_entry['pokemon_id']:03d} "
@@ -229,15 +262,44 @@ def refresh():
 
 
 @main.command()
-def install():
-    """Schedule the wallpaper to update daily at 08:00.
+@click.option("--keep-images", "keep_images", is_flag=True, flag_value=True, default=None,
+              help="Save all wallpaper images locally.")
+@click.option("--no-keep-images", "keep_images", is_flag=True, flag_value=False,
+              help="Keep only the 3 most recent wallpapers on disk.")
+def config(keep_images):
+    """Show or change configuration settings.
 
-    On Linux, installs a systemd user timer and an XDG autostart entry.
-    On Windows, creates Task Scheduler entries for daily and login triggers.
+    Run without flags to see current settings.
+    Use --keep-images / --no-keep-images to change the storage mode.
+    """
+    if keep_images is None:
+        current = get_keep_images()
+        if current is None:
+            click.echo("Storage mode: not configured yet (will be asked on next run).")
+        elif current:
+            click.echo("Storage mode: keep all images (--keep-images).")
+        else:
+            click.echo("Storage mode: rolling cache — only 3 most recent kept (--no-keep-images).")
+        return
+
+    set_keep_images(keep_images)
+    if keep_images:
+        click.echo("Storage mode set: all wallpapers will be saved locally.")
+    else:
+        click.echo("Storage mode set: only the 3 most recent wallpapers will be kept on disk.")
+        prune_wallpapers(keep=3)
+
+
+@main.command()
+def install():
+    """Install the systemd timer and autostart entry for daily wallpaper updates.
+
+    Sets up a systemd user timer that runs every day at 08:00 and an XDG
+    autostart entry so the wallpaper is applied automatically when you log in.
     """
     try:
         _install()
-        click.echo("Wallpaper scheduled. It will update daily at 08:00.")
+        click.echo("Timer installed. Wallpaper will update daily at 08:00.")
         click.echo("Autostart enabled. Wallpaper will apply automatically on login.")
         click.echo("Run 'pokemon-wallpaper run' to apply today's wallpaper right now.")
     except Exception as e:
@@ -246,10 +308,10 @@ def install():
 
 @main.command()
 def uninstall():
-    """Remove the daily wallpaper schedule."""
+    """Remove the systemd timer and autostart entry."""
     try:
         _uninstall()
-        click.echo("Schedule and autostart removed.")
+        click.echo("Timer and autostart removed.")
     except Exception as e:
         raise click.ClickException(str(e))
 

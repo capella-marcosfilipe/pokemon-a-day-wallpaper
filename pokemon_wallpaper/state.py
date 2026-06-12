@@ -54,3 +54,18 @@ def clear_paused() -> None:
     data["paused"] = False
     data["history_position"] = None
     _write(data)
+
+
+def get_keep_images() -> bool | None:
+    """Return the user's image-retention preference, or None if not set yet."""
+    data = _read()
+    val = data.get("keep_images")
+    if val is None:
+        return None
+    return bool(val)
+
+
+def set_keep_images(value: bool) -> None:
+    data = _read()
+    data["keep_images"] = value
+    _write(data)
